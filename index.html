@@ -99,7 +99,7 @@
 
         /* 📊 階段一：產品清單格線 */
         .product-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 25px; }
-        .product-card { border: 1px solid var(--gray-border); border-radius: 12px; overflow: hidden; background: var(--white); display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s, box-shadow 0.2s; }
+        .product-card { border: 1px solid var(--gray-border); border-radius: 12px; overflow: hidden; background: var(--white); display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s, box-shadow 0.2s; height: 100%; /* 🟢 關鍵修正：讓卡片在 Grid 內等高 */ }
         .product-card:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,0.06); }
         /*.p-img-placeholder { height: 145px; background: linear-gradient(135deg, #2A6F85, var(--primary-teal)); color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 15px; text-align: center; position: relative; }*/
         /* 📊 階段一：產品卡片頂部區塊樣式（支援動態背景圖與防搶視覺遮罩） */
@@ -140,9 +140,15 @@
         .p-price { font-size: 16px; font-weight: 700; color: var(--accent-coral); margin-bottom: 15px; }
 
         /* 🔒 舊生學員限定卡片樣式 */
-        .product-card.locked-item { border-color: #CBD5E1; background: #FAFAFA; cursor: pointer; }
+        .product-card.locked-item { border-color: #CBD5E1; background: #FAFAFA; /*cursor: pointer;*/ }
         .product-card.locked-item:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,0.06); }
-        .product-card.locked-item .p-img-placeholder { background: linear-gradient(135deg, #4A626A, #455A64); /*background: linear-gradient(135deg, #A855F7, #7E22CE); */ }
+        /* 🟢 關鍵修正：舊生卡片的圖片頂部高度與背景屬性，必須死死對齊常規卡片 */
+        .product-card.locked-item .p-img-placeholder {
+            height: 145px; /* 強制重設高度，防止行內樣式將高度撐開破版 */
+            background-size: cover !important;
+            background-position: center !important;
+            background-repeat: no-repeat !important;
+         }
         /* 按鈕改為一致的深灰藍，維持簡約風格 */
         .product-card.locked-item .btn-order {  background: #455A64; }
         .product-card.locked-item .btn-order:hover { background: #1A282D; }
@@ -224,10 +230,44 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes modalSlide { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         
-        @media (max-width: 850px) { 
+        /* @media (max-width: 850px) { 
             .product-grid { grid-template-columns: 1fr; } 
             .detail-layout, .checkout-layout { grid-template-columns: 1fr; } 
+        }*/
+        @media (max-width: 850px) { 
+            /* 1. 調整最外層容器的內距，符合手機指尖操作習慣 */
+            body { padding: 12px 6px; }
+            .container { padding: 18px; min-height: auto; }
+    
+            /* 2. 產品列表強制轉為單欄，並將每張卡片間距微調為 16px */
+            .product-grid { 
+            grid-template-columns: 1fr !important; 
+            gap: 16px; 
+        } 
+    
+        /* 3. 🟢 行動端防破版核心：強制對齊手機上的圖片比例 */
+        .product-card .p-img-placeholder,
+        .product-card.locked-item .p-img-placeholder { 
+            height: 160px !important; /* 在手機版稍微放大圖片高度，視覺比例最舒服 */
+            padding: 20px;
         }
+    
+        /* 4. 常規與舊生卡片下方的內容物間距對齊 */
+        .p-content {
+            padding: 16px;
+        }
+
+        /* 5. 階段二、三的雙欄佈局手機版降級為單欄 */
+        .detail-layout, .checkout-layout { 
+            grid-template-columns: 1fr !important; 
+            gap: 25px;
+        } 
+    
+        /* 6. 金流收銀台在手機版改為滿版 */
+        .order-summary-box {
+            margin-top: 10px;
+        }
+     }
 
         /* 💳 金流選單優化 */
         .payment-select-wrapper { position: relative; width: 100%; }
