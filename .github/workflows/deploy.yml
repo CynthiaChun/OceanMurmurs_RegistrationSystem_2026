@@ -3,31 +3,43 @@ name: Deploy to GitHub Pages Securely
 on:
   push:
     branches:
-      - main # 當妳 push 到 main 分支時自動觸發
+      - main # 當妳將代碼 push 到 main 分支時自動觸發此工作流
 
+# 設定自動化機器人的安全性權限
 permissions:
   contents: read
   pages: write
   id-token: write
 
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
 jobs:
   deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/rules/checkout@v4
+        uses: actions/checkout@v4
 
-      # 🟢 核心資安動作：在部署前，用後台的 Secret 把 {{...}} 標籤安全置換掉
+      # 🟢 核心資安動作：在打包發布前，用後台 Secret 把網頁裡的 {{...}} 標籤安全置換掉
       - name: Inject Secrets into Code
         run: |
-          sed -i "s|{{BACKEND_`URL`}}|${{ secrets.MY_BACKEND_URL }}|g" index.html
+          sed -i "s|{{BACKEND_URL}}|${{ secrets.MY_BACKEND_URL }}|g" index.html
           sed -i "s|{{LIFF_ID}}|${{ secrets.MY_LIFF_ID }}|g" index.html
           sed -i "s|{{GS_API_URL}}|${{ secrets.MY_GS_API_URL }}|g" index.html
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: '.' # 將當前目錄的所有網頁檔案（已置換完成）上傳至發布佇列
 
       - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4
