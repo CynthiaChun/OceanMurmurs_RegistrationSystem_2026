@@ -3,9 +3,8 @@ name: Deploy to GitHub Pages Securely
 on:
   push:
     branches:
-      - main # 當妳將代碼 push 到 main 分支時自動觸發此工作流
+      - main
 
-# 設定自動化機器人的安全性權限
 permissions:
   contents: read
   pages: write
@@ -25,12 +24,15 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 🟢 核心資安動作：在打包發布前，用後台 Secret 把網頁裡的 {{...}} 標籤安全置換掉
+      # 🟢 CTO 暴力通管升級：直接鎖定變數宣告的前綴，無視引號與大括號，直接強行複寫整行！
       - name: Inject Secrets into Code
         run: |
-          sed -i "s|{{BACKEND_URL}}|${{ secrets.MY_BACKEND_URL }}|g" index.html
-          sed -i "s|{{LIFF_ID}}|${{ secrets.MY_LIFF_ID }}|g" index.html
-          sed -i "s|{{GS_API_URL}}|${{ secrets.MY_GS_API_URL }}|g" index.html
+          sed -i "s|const BACKEND_URL =.*|const BACKEND_URL = '${{ secrets.MY_BACKEND_URL }}';|g" index.html
+          sed -i "s|const LIFF_ID =.*|const LIFF_ID = '${{ secrets.MY_LIFF_ID }}';|g" index.html
+          sed -i "s|const GS_API_URL =.*|const GS_API_URL = '${{ secrets.MY_GS_API_URL }}';|g" index.html
+          
+          echo "=== 🛡️ 雲端核心資安校驗日誌 ==="
+          grep -E "GS_API_URL|LIFF_ID|BACKEND_URL" index.html
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -38,7 +40,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.' # 將當前目錄的所有網頁檔案（已置換完成）上傳至發布佇列
+          path: '.'
 
       - name: Deploy to GitHub Pages
         id: deployment
