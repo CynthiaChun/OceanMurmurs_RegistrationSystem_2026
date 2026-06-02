@@ -231,106 +231,97 @@
         @keyframes modalSlide { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         
         @media (max-width: 850px) { 
-    /* 1. 調整最外層容器的內距，符合手機指尖操作習慣 */
-    body { padding: 12px 6px; }
-    .container { padding: 16px; min-height: auto; }
-    
-    /* 2. 產品列表（首頁）強制轉為單欄 */
-    .product-grid { 
-        grid-template-columns: 1fr !important; 
-        gap: 16px; 
-    } 
-    
-    /* 3. 產品首頁卡片圖片高度鎖定 */
-    .product-card .p-img-placeholder,
-    .product-card.locked-item .p-img-placeholder { 
-        height: 160px !important; 
-        padding: 20px;
-    }
-    
-    /* 4. 🏁 階段二：詳情頁面手機版（Flex 瀑布流重組） */
-    .detail-layout { 
-        display: flex !important;
-        flex-direction: column !important; 
-        gap: 20px !important;
-    } 
+            /* 1. 調整最外層容器的內距，符合手機指尖操作習慣 */
+            body { padding: 12px 6px; }
+            .container { padding: 16px; min-height: auto; }
+            
+            /* 2. 產品列表（首頁）強制轉為單欄 */
+            .product-grid { 
+                grid-template-columns: 1fr !important; 
+                gap: 16px; 
+            } 
+            
+            /* 3. 產品首頁卡片圖片高度鎖定 */
+            .product-card .p-img-placeholder,
+            .product-card.locked-item .p-img-placeholder { 
+                height: 160px !important; 
+                padding: 20px;
+            }
+            
+            /* 4. 🏁 階段二：詳情頁面手機版（Flex 瀑布流重組） */
+            .detail-layout { 
+                display: flex !important;
+                flex-direction: column !important; 
+                gap: 20px !important;
+            } 
 
-    .carousel-wrapper {
-        width: 100% !important;
-        max-width: 100% !important;
-        margin: 0 auto !important;
-        position: relative !important;
-    }
+            /* 強制幹掉舊的 padding 撐高法，直接用現代寬高比 */
+            .carousel-wrapper {
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 auto !important;
+                position: relative !important;
+            }
 
-    /* 🟢 核心修正：直接把 16:10 舒適比例加在最外層，並拔除 Absolute 限制，防禦 LINE LIFF 破版 */
-    .carousel-aspect-ratio {
-        padding-top: 0 !important; 
-        width: 100% !important;
-        height: auto !important;
-        position: relative !important;
-    }
+            .carousel-aspect-ratio {
+                padding-top: 0 !important; 
+                width: 100% !important;
+                aspect-ratio: 16 / 10 !important; /* 🔥 鋼鐵鎖定手機版圖片為 16:10 橫幅比例 */
+                position: relative !important;
+            }
 
-    /* 🔥 終極安全網：直接強制重設輪播容器，用實體高度撐開，拒絕 0px */
-    .carousel-container {
-        position: relative !important; /* 改回相對定位，釋放空間 */
-        width: 100% !important;
-        height: auto !important;
-        aspect-ratio: 16 / 10 !important; /* 直接在此鎖定圖片高寬比 */
-    }
+            /* 確保輪播容器在 16:10 下完美滿版 */
+            .carousel-container {
+                position: absolute !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                display: flex !important;
+                overflow-x: auto !important;
+            }
 
-    /* 確保裡面的潛水圖片乖乖填滿 16:10 容器 */
-    .carousel-slide {
-        height: 100% !important;
-    }
-    .carousel-slide img {
-        width: 100% !important;
-        height: 100% !important;
-        object-fit: cover !important;
-    }
+            /* 確保按鈕在手機上不會亂跑且看得見 */
+            .carousel-nav-btn {
+                z-index: 10 !important;
+            }
 
-    /* 🟢 強制在手機版將左右切換按鈕鎖定在 16:10 圖片的垂直中央 */
-    .carousel-nav-btn {
-        top: 50% !important;
-        transform: translateY(-50%) !important;
-        position: absolute !important;
-    }       
+            /* 5. 🚀 專門針對「隱藏表單後」的介紹內文與按鈕進行束縛防禦 */
+            .detail-form {
+                width: 100% !important;
+                display: flex !important;
+                flex-direction: column !important;
+            }
 
-    /* 5. 🚀 專門針對「舊生限定（隱藏表單後）」的介紹內文與按鈕進行束縛防禦 */
-    .detail-form {
-        width: 100% !important;
-        display: flex !important;
-        flex-direction: column !important;
-    }
+            /* 修正按鈕群組在手機板的排版 */
+            .detail-form .button-group {
+                display: flex !important;
+                flex-direction: column !important; 
+                gap: 12px !important;
+                margin-top: 25px !important;
+                width: 100% !important;
+            }
 
-    /* 修正按鈕群組在手機板的排版 */
-    .detail-form .button-group {
-        display: flex !important;
-        flex-direction: column !important; 
-        gap: 12px !important;
-        margin-top: 25px !important;
-        width: 100% !important;
-    }
+            .detail-form .button-group button,
+            .detail-form .button-group a {
+                width: 100% !important;
+                box-sizing: border-box !important;
+                padding: 14px 16px !important;
+                font-size: 14px !important;
+                text-align: center !important;
+                display: block !important;
+            }
 
-    .detail-form .button-group button,
-    .detail-form .button-group a {
-        width: 100% !important;
-        box-sizing: border-box !important;
-        padding: 14px 16px !important;
-        font-size: 14px !important;
-        text-align: center !important;
-        display: block !important;
-    }
-
-    /* 6. 🛒 階段三：購物車雙欄佈局手機版降級 */
-    .checkout-layout { 
-        grid-template-columns: 1fr !important; 
-        gap: 25px;
-    } 
-    
-    .order-summary-box {
-        margin-top: 10px;
-    }
-}
+            /* 6. 🛒 階段三：購物車雙欄佈局手機版降級 */
+            .checkout-layout { 
+                grid-template-columns: 1fr !important; 
+                gap: 25px;
+            } 
+            
+            .order-summary-box {
+                margin-top: 10px;
+            }
+        }
 
         /* 💳 金流選單優化 */
         .payment-select-wrapper { position: relative; width: 100%; }
@@ -903,16 +894,37 @@
         // ──────────────────────────────────────────────────────────────
         // 🟢 核心修改區域：動態渲染輪播圖 (Carousel Carousel Slide)
         // ──────────────────────────────────────────────────────────────
-        const container = document.getElementById('carouselId');
+        const container = document.getElementById('carouselId'); // 這台是 .carousel-container
+        const wrapper = container ? container.parentElement : null; // 找到它的上一層 .carousel-aspect-ratio
+
         if (container) {
-            // 先清空原本寫死的 Unsplash 測試圖片，並保留左右切換按鈕
-            container.innerHTML = `
-                <button class="carousel-nav-btn prev" type="button" onclick="scrollCarousel(-1)">‹</button>
-                <button class="carousel-nav-btn next" type="button" onclick="scrollCarousel(1)">›</button>
-            `;
-     
+            // 1. container 裡面只裝純圖片，不可以塞按鈕！先完全清空它
+            container.innerHTML = ''; 
+            
+            // 2. 檢查並移除舊的按鈕（防止多次點擊時重複生成），然後把新按鈕掛在外面這一層
+            if (wrapper) {
+                const oldBtns = wrapper.querySelectorAll('.carousel-nav-btn');
+                oldBtns.forEach(b => b.remove());
+
+                // 建立新的左、右按鈕並掛到 container 的旁邊（同級獨立節點）
+                const prevBtn = document.createElement('button');
+                prevBtn.className = 'carousel-nav-btn prev';
+                prevBtn.type = 'button';
+                prevBtn.innerHTML = '‹';
+                prevBtn.onclick = () => scrollCarousel(-1);
+
+                const nextBtn = document.createElement('button');
+                nextBtn.className = 'carousel-nav-btn next';
+                nextBtn.type = 'button';
+                nextBtn.innerHTML = '›';
+                nextBtn.onclick = () => scrollCarousel(1);
+
+                wrapper.appendChild(prevBtn);
+                wrapper.appendChild(nextBtn);
+            }
+
+            // 3. 開始塞入圖片幻燈片
             if (details.carousel && details.carousel.length > 0) {
-                // 遍歷 API 回傳的 carousel 陣列，動態組裝 img 標籤
                 details.carousel.forEach(imgObj => {
                     const slide = document.createElement('div');
                     slide.className = 'carousel-slide';
@@ -920,27 +932,23 @@
                     container.appendChild(slide);
                 });
             } else if (details.bgurl && details.bgurl.trim() !== "") {
-                // 防呆機制：若 carousel 欄位剛好沒填，則自動降級使用主 bgurl 填滿單張輪播
                 const slide = document.createElement('div');
                 slide.className = 'carousel-slide';
                 slide.innerHTML = `<img src="${details.bgurl}" alt="${name}" loading="lazy">`;
                 container.appendChild(slide);
             } else {
-                // 完全無圖時的預設潛水品牌形象主圖防破版
                 const slide = document.createElement('div');
                 slide.className = 'carousel-slide';
                 slide.innerHTML = `<img src="${OM_Img_Url}" alt="Ocean Murmurs">`;
                 container.appendChild(slide);
             }
             
-            // 渲染完成後，強制重設輪播圖捲軸回到最左側第一張
+            // 重設捲軸回到第一張
             container.scrollLeft = 0;
         }
         // ──────────────────────────────────────────────────────────────
         // 🟢 核心修改區域結束（下方維持你原本的 infoHTML、fieldsWrapper 邏輯即可）
         // ──────────────────────────────────────────────────────────────
-
-
         currentOrder.code = code;
         currentOrder.name = name;
         currentOrder.basePrice = Number(price);
@@ -959,7 +967,6 @@
             const price = Number(details.price).toLocaleString();
             const originalPrice = Number(details.originalPrice).toLocaleString();
             
-            // 如果有原價且原價大於售價，才顯示刪除線的原價
             if (details.originalPrice > details.price) {
                 priceHTML = `NT$ ${price} <span class="info-original-price" style="margin-left:9px;">原價 NT$ ${originalPrice}</span>`;
             } else {
@@ -970,21 +977,6 @@
         let infoHTML = `<h2>${details.title}</h2>
                         <div class="info-price-row">${priceHTML}</div>
                         <div class="info-system-declare">※ 此為線上系統，<a href="javascript:void(0)" onclick="openPolicyModal()">課程細節與安全規範政策內容請至此瀏覽</a>。</div>`;
-        // 🟢 動態組裝介紹內文，將試算表的 admin_note (我的說明) 漂亮地顯示在畫面上
-        //let infoHTML = `<h2>${details.title}</h2>
-        //                <div class="info-price-row">${priceHTML}</div>
-        //                
-        //                <!-- 新增：如果有 admin_note 說明，用一格漂亮的小區塊呈現包含項目 -->
-        //                ${details.admin_note ? `
-        //                    <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 12px; border-radius: 8px; margin: 15px 0; font-size: 13.5px; line-height: 1.6; color: #334155;">
-        //                        <strong style="color: var(--primary-teal); display: block; margin-bottom: 4px;">📦 方案包含項目說明：</strong>
-        //                        ${details.admin_note}
-        //                    </div>
-        //                ` : ''}
-        //                
-        //                <div class="info-system-declare">※ 此為線上系統，<a href="javascript:void(0)" onclick="openPolicyModal()">課程細節與安全規範政策內容請至此瀏覽</a>。</div>`;
-        // ──────────────────────────────────────────────────────────────
-
         
         if (details.paragraphs && details.paragraphs.length > 0) {
             details.paragraphs.forEach(p => infoHTML += `<p class="info-paragraph">${p}</p>`);
@@ -992,7 +984,6 @@
         infoHTML += `<div class="info-warm-notice">${details.warmNotice}</div>`;
         infoBlock.innerHTML = infoHTML;
 
-        // 如果是舊生限定的潛旅區塊，隱藏時段表單，直接導向官方 LINE 客服索取簡章
         if (code.startsWith('tour_')) {
             fieldsWrapper.style.display = 'none';
             buttonGroup.innerHTML = `<button class="btn-back" type="button" onclick="navigateBack()">← 返回計畫列表</button>
@@ -1004,7 +995,6 @@
                 <button class="btn-next" type="button" onclick="goToCart()">加入購物車並下一步</button>
             `;
 
-            // 動態場次按鈕渲染
             const slotsGrid = document.querySelector('.slots-grid');
             slotsGrid.innerHTML = ''; 
             if (details.slots && details.slots.length > 0) {
@@ -1029,41 +1019,19 @@
             // ──────────────────────────────────────────────────────────────
             const paxSelect = document.getElementById('paxCount');
             if (paxSelect) {
-                paxSelect.innerHTML = ''; // 先清空下拉選單的舊選項
-                
-                // 🔑 關鍵改動：你的 Google Sheet 回傳欄位叫做 peopleCount，在此精準讀取
+                paxSelect.innerHTML = '';
                 const maxLimit = details.peopleCount ? parseInt(details.peopleCount) : 4; 
-                
-                // 跑迴圈動態吐出 1 到上限值的選單節點
                 for (let i = 1; i <= maxLimit; i++) {
                     const opt = document.createElement('option');
                     opt.value = i;
-                    // 當數值到達上限時，加上 (上限) 的防呆視覺提示
                     opt.innerText = i === maxLimit ? `${i} 人 (上限)` : `${i} 人`;
                     paxSelect.appendChild(opt);
                 }
             }
-            // ──────────────────────────────────────────────────────────────
 
-            // 動態增值加購服務選單
-            //const addonSelect = document.getElementById('addon-select');
-            //addonSelect.innerHTML = '<option value="none" data-price="0">不加購額外服務</option>'; 
-            //if (details.addons && details.addons.length > 0) {
-            //    details.addons.forEach(addon => {
-            //        const opt = document.createElement('option');
-            //        opt.value = addon.type; 
-            //        opt.setAttribute('data-price', addon.price);
-            //        opt.innerText = `${addon.text} — +$${addon.price.toLocaleString()}`;
-            //        addonSelect.appendChild(opt);
-            //    });
-            //}
-            // ──────────────────────────────────────────────────────────────
-            // 🟢 調整：將加購服務改為 Checkbox 多選框動態生成
-            // ──────────────────────────────────────────────────────────────
             const addonContainer = document.getElementById('addon-checkbox-container');
             if (addonContainer) {
-                addonContainer.innerHTML = ''; // 先刷空舊的容器内容
-                
+                addonContainer.innerHTML = ''; 
                 if (details.addons && details.addons.length > 0) {
                     details.addons.forEach((addon, index) => {
                         const wrapper = document.createElement('div');
@@ -1072,7 +1040,6 @@
                         wrapper.style.gap = '10px';
                         wrapper.style.cursor = 'pointer';
                         
-                        // 建立 Checkbox 本體
                         const chk = document.createElement('input');
                         chk.type = 'checkbox';
                         chk.className = 'addon-checkbox-item';
@@ -1080,20 +1047,14 @@
                         chk.id = `addon_chk_${index}`;
                         chk.setAttribute('data-price', addon.price);
                         chk.setAttribute('data-text', addon.text);
-
-                        // 🟢 新增：把 API 的 hours 欄位埋入 HTML 屬性中，如果沒有寫預設為 0
                         chk.setAttribute('data-hours', addon.hours || 0);
                         
-                        // 處理事件：勾選時立即重新計算金額（選填：如果你希望在 Step 2 就能即時看到金額）
-                        // chk.onchange = function() { ... }; 
-
-                        // 建立 Label 標籤文字
                         const lbl = document.createElement('label');
                         lbl.htmlFor = `addon_chk_${index}`;
                         lbl.style.cursor = 'pointer';
                         lbl.style.fontSize = '13.5px';
                         lbl.style.fontWeight = '500';
-                        lbl.style.marginBottom = '0'; // 覆蓋全域的 label margin
+                        lbl.style.marginBottom = '0'; 
                         lbl.innerText = `${addon.text} ( +$${addon.price.toLocaleString()} )`;
                         
                         wrapper.appendChild(chk);
@@ -1104,7 +1065,6 @@
                     addonContainer.innerHTML = '<div style="color:var(--text-muted); font-size:13px;">💡 本方案目前無可額外加購之輔助服務。</div>';
                 }
             }
-            // ──────────────────────────────────────────────────────────────
         }
         
         document.getElementById('bookingDate').value = "";
