@@ -26,14 +26,43 @@
         .brand-section { display: flex; align-items: center; gap: 20px; background: linear-gradient(135deg, #0F2537, var(--primary-teal)); color: white; padding: 24px; border-radius: 12px; margin-bottom: 25px; }
         .brand-logo-img { width: 65px; height: 65px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); flex-shrink: 0; }
         .brand-text h1 { font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
-        .brand-text p { font-size: 13px; opacity: 0.85; margin-top: 4px; line-height: 1.4; }
+        .brand-text p { font-size: 13px; opacity: 0.85; margin-top: 4px; line-height: 1.4; }        
 
         /* 🧭 步驟進度條 */
         .steps-bar { display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 30px; border-bottom: 2px solid var(--gray-light); padding-bottom: 20px; font-size: 14px; font-weight: 600; color: #9CA3AF; }
         .step-item { display: flex; align-items: center; gap: 8px; }
         .step-item.active { color: var(--primary-teal); }
-        .step-number { width: 24px; height: 24px; border-radius: 50%; background: #E5E7EB; color: white; display: flex; align-items: center; justify-content: center; font-size: 11px; }
-        .step-item.active .step-number { background: var(--primary-teal); }
+        /* .step-number { width: 24px; height: 24px; border-radius: 50%; background: #E5E7EB; color: white; display: flex; align-items: center; justify-content: center; font-size: 11px; } */
+        /* .step-item.active .step-number { background: var(--primary-teal); } */
+        .step-number { 
+            width: 24px; 
+            height: 24px; 
+            
+            /* 🟢 關鍵修正一：鋼鐵鎖定硬體尺寸，絕對不允許 Flexbox 進行任何微幅擠壓 */
+            min-width: 24px;
+            min-height: 24px;
+            flex-shrink: 0; 
+            
+            /* 🟢 關鍵修正二：確保寬高比永遠維持完美 1:1 */
+            aspect-ratio: 1 / 1; 
+            
+            border-radius: 50%; 
+            background: #E5E7EB; 
+            color: white; 
+            display: inline-flex; /* 🟢 修正三：在流式佈局中改用 inline-flex 結構更穩固 */
+            align-items: center; 
+            justify-content: center; 
+            font-size: 11px; 
+            
+            /* 補充：防止數字被外層字型大小（line-height）撐開變形 */
+            line-height: 1;
+            box-sizing: border-box;
+        }
+        
+        /* 保持妳原本的 active 狀態激活 */
+        .step-item.active .step-number { 
+            background: var(--primary-teal); 
+        }
         .step-arrow { color: #D1D5DB; }
 
         /* SPA 區塊切換 */
@@ -271,7 +300,7 @@
     </div>
     
     <img src="images/sea.png" class="diver-loader" alt="Diver">
-    
+
     <div style="color: var(--primary-teal); font-weight: 600; margin-top: 20px; text-align: center; z-index: 20;">
         <span id="loading-text">正準備深潛至內太空...</span><br>
         <span style="font-size: 13px; font-weight: normal; color: #64748B;" id="loading-sub">請稍後，「Ocean Murmurs • 呼藍之間」系統正在確認課程項目。</span>
@@ -280,7 +309,9 @@
 
 <div class="container">
     <div class="brand-section">
-        <div class="brand-logo-img">🤿</div>
+        <div class="brand-logo-container">
+            <img src="images/logo_w_b_.png" alt="Ocean Murmurs Logo" class="brand-logo-img">
+        </div>
         <div class="brand-text">
             <h1>Ocean Murmurs • 呼藍之間</h1>
             <p>「聆聽內太空的呢喃，絕不讓你成為潛水孤兒。」最高 1:4 師生比，用最嚴謹的資安防護與教學品質，帶你安全探索無垠海洋。</p>
@@ -517,18 +548,11 @@
 
 <script>
     // 🟢 改成預留位置符號，讓 GitHub Actions 自動來填字
-    //const BACKEND_URL = '{{BACKEND_URL}}'; 
-    //const LIFF_ID = '{{LIFF_ID}}'; 
-    //const GS_API_URL = '{{GS_API_URL}}'; 
-    //const lineid = '@898yqsqi'; // @您的LINEID，若需要測試可直接填入開發者的LINE ID
-    //const OM_Img_Url = 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?q=80&w=600&auto=format&fit=cover'; // 潛水品牌形象主圖防破版
-
-    const BACKEND_URL = 'https://your-zeabur-app.zeabur.app'; 
-    const LIFF_ID = 'YOUR_LINE_LIFF_ID'; 
-    const GS_API_URL = 'https://script.google.com/macros/s/AKfycbz9pbUvdLHiTWmhgsEJNYbcF5UbNx-N1_1SS2fyEVLAjLShMzuJiNtVW1iFp-lmvk6W/exec'; 
+    const BACKEND_URL = '{{BACKEND_URL}}'; 
+    const LIFF_ID = '{{LIFF_ID}}'; 
+    const GS_API_URL = '{{GS_API_URL}}'; 
     const lineid = '@898yqsqi'; // @您的LINEID，若需要測試可直接填入開發者的LINE ID
     const OM_Img_Url = 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?q=80&w=600&auto=format&fit=cover'; // 潛水品牌形象主圖防破版
-
 
     let PLAN_DETAILS = {}; 
     let currentOrder = { 
@@ -1027,6 +1051,10 @@
      * ─── 核心功能 7：加入購物車明細計算 (全面支援加購多選) ───
      */    
     function goToCart() {
+        const payBtn = document.getElementById('payBtn');
+        payBtn.disabled = false;
+        payBtn.innerText = '安全送出訂單並跳轉支付';
+        
         const dateVal = document.getElementById('bookingDate').value;
         if (!dateVal || !selectedSlotText) {
             alert('請完整選取預約日期與場次時段！');
