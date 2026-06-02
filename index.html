@@ -453,11 +453,8 @@
             <div class="info-side-block">
                 <div class="carousel-wrapper">
                     <div class="carousel-aspect-ratio">
-                        <button class="carousel-nav-btn prev" type="button" onclick="scrollCarousel(-1)">‹</button>
-                        <button class="carousel-nav-btn next" type="button" onclick="scrollCarousel(1)">›</button>
                         <div class="carousel-container" id="carouselId">
-                            <div class="carousel-slide"><img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?q=80&w=600&auto=format&fit=cover"></div>
-                            <div class="carousel-slide"><img src="https://images.unsplash.com/photo-1682687220063-4742bd7fd538?q=80&w=600&auto=format&fit=cover"></div>
+                            <div class="carousel-container" id="carouselId"></div>
                         </div>
                     </div>
                 </div>
@@ -923,7 +920,7 @@
                 wrapper.appendChild(nextBtn);
             }
 
-            // 3. 開始塞入圖片幻燈片
+            // 3. 塞入圖片幻燈片
             if (details.carousel && details.carousel.length > 0) {
                 details.carousel.forEach(imgObj => {
                     const slide = document.createElement('div');
