@@ -230,11 +230,7 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes modalSlide { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         
-        /* @media (max-width: 850px) { 
-            .product-grid { grid-template-columns: 1fr; } 
-            .detail-layout, .checkout-layout { grid-template-columns: 1fr; } 
-        }*/
-       @media (max-width: 850px) { 
+        @media (max-width: 850px) { 
     /* 1. 調整最外層容器的內距，符合手機指尖操作習慣 */
     body { padding: 12px 6px; }
     .container { padding: 16px; min-height: auto; }
@@ -259,7 +255,6 @@
         gap: 20px !important;
     } 
 
-    /* 🟢 關鍵修正：強制幹掉舊的 padding 撐高法，直接用現代寬高比 */
     .carousel-wrapper {
         width: 100% !important;
         max-width: 100% !important;
@@ -267,23 +262,33 @@
         position: relative !important;
     }
 
+    /* 🟢 核心修正：直接把 16:10 舒適比例加在最外層，並拔除 Absolute 限制，防禦 LINE LIFF 破版 */
     .carousel-aspect-ratio {
-        padding-top: 0 !important; /* 徹底釋放舊的 padding 綁架 */
+        padding-top: 0 !important; 
         width: 100% !important;
-        aspect-ratio: 16 / 10 !important; /* 🔥 鋼鐵鎖定手機版圖片為 16:10 舒適橫幅比例 */
+        height: auto !important;
         position: relative !important;
     }
 
-    /* 確保輪播容器在 16:10 下完美滿版 */
+    /* 🔥 終極安全網：直接強制重設輪播容器，用實體高度撐開，拒絕 0px */
     .carousel-container {
-        position: absolute !important;
-        top: 0 !important;
-        left: 0 !important;
+        position: relative !important; /* 改回相對定位，釋放空間 */
         width: 100% !important;
-        height: 100% !important;
+        height: auto !important;
+        aspect-ratio: 16 / 10 !important; /* 直接在此鎖定圖片高寬比 */
     }
 
-    /* 🟢 新增：強制在手機版將左右切換按鈕鎖定在 16:10 圖片的垂直中央 */
+    /* 確保裡面的潛水圖片乖乖填滿 16:10 容器 */
+    .carousel-slide {
+        height: 100% !important;
+    }
+    .carousel-slide img {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+    }
+
+    /* 🟢 強制在手機版將左右切換按鈕鎖定在 16:10 圖片的垂直中央 */
     .carousel-nav-btn {
         top: 50% !important;
         transform: translateY(-50%) !important;
