@@ -283,6 +283,13 @@
         height: 100% !important;
     }
 
+    /* 🟢 新增：強制在手機版將左右切換按鈕鎖定在 16:10 圖片的垂直中央 */
+    .carousel-nav-btn {
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        position: absolute !important;
+    }       
+
     /* 5. 🚀 專門針對「舊生限定（隱藏表單後）」的介紹內文與按鈕進行束縛防禦 */
     .detail-form {
         width: 100% !important;
