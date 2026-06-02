@@ -1,0 +1,33 @@
+name: Deploy to GitHub Pages Securely
+
+on:
+  push:
+    branches:
+      - main # 當妳 push 到 main 分支時自動觸發
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/rules/checkout@v4
+
+      # 🟢 核心資安動作：在部署前，用後台的 Secret 把 {{...}} 標籤安全置換掉
+      - name: Inject Secrets into Code
+        run: |
+          sed -i "s|{{BACKEND_`URL`}}|${{ secrets.MY_BACKEND_URL }}|g" index.html
+          sed -i "s|{{LIFF_ID}}|${{ secrets.MY_LIFF_ID }}|g" index.html
+          sed -i "s|{{GS_API_URL}}|${{ secrets.MY_GS_API_URL }}|g" index.html
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
