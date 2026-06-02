@@ -235,39 +235,73 @@
             .detail-layout, .checkout-layout { grid-template-columns: 1fr; } 
         }*/
         @media (max-width: 850px) { 
-            /* 1. 調整最外層容器的內距，符合手機指尖操作習慣 */
-            body { padding: 12px 6px; }
-            .container { padding: 18px; min-height: auto; }
+    /* 1. 調整最外層容器的內距，符合手機指尖操作習慣 */
+    body { padding: 12px 6px; }
+    .container { padding: 16px; min-height: auto; }
     
-            /* 2. 產品列表強制轉為單欄，並將每張卡片間距微調為 16px */
-            .product-grid { 
-            grid-template-columns: 1fr !important; 
-            gap: 16px; 
-        } 
+    /* 2. 產品列表（首頁）強制轉為單欄 */
+    .product-grid { 
+        grid-template-columns: 1fr !important; 
+        gap: 16px; 
+    } 
     
-        /* 3. 🟢 行動端防破版核心：強制對齊手機上的圖片比例 */
-        .product-card .p-img-placeholder,
-        .product-card.locked-item .p-img-placeholder { 
-            height: 160px !important; /* 在手機版稍微放大圖片高度，視覺比例最舒服 */
-            padding: 20px;
-        }
+    /* 3. 產品首頁卡片圖片高度鎖定 */
+    .product-card .p-img-placeholder,
+    .product-card.locked-item .p-img-placeholder { 
+        height: 160px !important; 
+        padding: 20px;
+    }
     
-        /* 4. 常規與舊生卡片下方的內容物間距對齊 */
-        .p-content {
-            padding: 16px;
-        }
+    /* 4. 🏁 階段二：詳情頁面手機版破版重組核心 */
+    .detail-layout { 
+        display: flex !important;
+        flex-direction: column !important; /* 放棄 Grid，改用 Flex 垂直排列，確保不跑版 */
+        gap: 20px !important;
+    } 
 
-        /* 5. 階段二、三的雙欄佈局手機版降級為單欄 */
-        .detail-layout, .checkout-layout { 
-            grid-template-columns: 1fr !important; 
-            gap: 25px;
-        } 
+    /* 確保輪播圖在手機上有完美的 1:1 或接近的比例，且不被文字擠壓 */
+    .carousel-wrapper {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 auto;
+    }
+
+    /* 5. 🚀 專門針對「舊生限定（隱藏表單後）」的介紹內文與按鈕進行束縛防禦 */
+    .detail-form {
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    /* 修正按鈕群組在手機板的排版 */
+    .detail-form .button-group {
+        display: flex !important;
+        flex-direction: column !important; /* 在手機上按鈕上下疊放，符合大拇指按壓習慣 */
+        gap: 12px !important;
+        margin-top: 25px !important;
+        width: 100% !important;
+    }
+
+    .detail-form .button-group button,
+    .detail-form .button-group a {
+        width: 100% !important;
+        box-sizing: border-box !important;
+        padding: 14px 16px !important;
+        font-size: 14px !important;
+        text-align: center !important;
+        display: block !important;
+    }
+
+    /* 6. 🛒 階段三：購物車雙欄佈局手機版降級 */
+    .checkout-layout { 
+        grid-template-columns: 1fr !important; 
+        gap: 25px;
+    } 
     
-        /* 6. 金流收銀台在手機版改為滿版 */
-        .order-summary-box {
-            margin-top: 10px;
-        }
-     }
+    .order-summary-box {
+        margin-top: 10px;
+    }
+}
 
         /* 💳 金流選單優化 */
         .payment-select-wrapper { position: relative; width: 100%; }
