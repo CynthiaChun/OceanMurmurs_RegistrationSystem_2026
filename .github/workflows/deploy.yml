@@ -27,12 +27,12 @@ jobs:
       # 🟢 CTO 暴力通管升級：直接鎖定變數宣告的前綴，無視引號與大括號，直接強行複寫整行！
       - name: Inject Secrets into Code
         run: |
-          sed -i "s|const BACKEND_URL =.*|const BACKEND_URL = '${{ secrets.BACKEND_URL }}';|g" index.html
-          sed -i "s|const LIFF_ID =.*|const LIFF_ID = '${{ secrets.LIFF_ID }}';|g" index.html
-          sed -i "s|const GS_API_URL =.*|const GS_API_URL = '${{ secrets.GS_API_URL }}';|g" index.html
+          sed -i "s|const BACKEND_URL =.*|const BACKEND_URL = '${{ secrets.BACKEND_URL }}';|g" main.js
+          sed -i "s|const LIFF_ID =.*|const LIFF_ID = '${{ secrets.LIFF_ID }}';|g" main.js
+          sed -i "s|const GS_API_URL =.*|const GS_API_URL = '${{ secrets.GS_API_URL }}';|g" main.js
           
           echo "=== 🛡️ 雲端核心資安校驗日誌 ==="
-          grep -E "GS_API_URL|LIFF_ID|BACKEND_URL" index.html
+          grep -E "GS_API_URL|LIFF_ID|BACKEND_URL" main.js
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
