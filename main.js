@@ -352,7 +352,7 @@
         if (code.startsWith('tour_')) {
             fieldsWrapper.style.display = 'none';
             buttonGroup.innerHTML = `<button class="btn-back" type="button" onclick="navigateBack()">← 返回計畫列表</button>
-                                     <button class="btn-next btn-line-redirect" type="button" onclick="window.location.href='https://line.me/R/ti/p/${lineid}'">💬 私訊官方 LINE 索取專屬簡章</button>`;
+                                     <button class="btn-next btn-line-redirect" type="button" onclick="window.location.href='https://line.me/R/ti/p/${lineid}'">私訊 LINE 索取簡章</button>`;
         } else {
             fieldsWrapper.style.display = 'block';
             buttonGroup.innerHTML = `
