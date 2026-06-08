@@ -510,25 +510,95 @@
         container.scrollBy({ left: direction * container.clientWidth, behavior: 'smooth' });
     }
 
+/**
+     * ─── 核心功能 6-1：修改後的場次渲染區塊 (抽離成獨立 function 供 handleDateChange 呼叫) ───
+     */
+async function updateAvailableSlots(productCode, selectedDate) {
+    const slotsGrid = document.querySelector('.slots-grid');
+    if (!slotsGrid || !selectedDate) return;
+
+    slotsGrid.innerHTML = '<div style="color:var(--text-muted); font-size:13px; padding: 5px 0;">🔍 正在連線安全通道，精算教練人力與船位資源...</div>';
+
+    try {
+        // 向 GAS 發送查詢
+        const response = await fetch(GS_API_URL, {
+            method: 'POST',
+            mode: 'cors',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({
+                action: "checkAvailableSlots",
+                productCode: productCode,
+                date: selectedDate
+            })
+        });
+        const result = await response.json();
+
+        if (result.success) {
+            slotsGrid.innerHTML = '';
+            if (result.availableSlots && result.availableSlots.length > 0) {
+                result.availableSlots.forEach(slot => {
+                    const btn = document.createElement('div');
+                    // 若被其他人 Soft Lock 或旺季 7 日內限制，後端直接給 status: 'locked' 或 'agent'
+                    if (slot.status === 'locked') {
+                        btn.className = 'slot-btn disabled';
+                        btn.innerText = `${slot.name} (已滿/預約中)`;
+                    } else if (slot.status === 'agent') {
+                        btn.className = 'slot-btn agent';
+                        btn.innerText = `${slot.name} (專人詢問)`;
+                        btn.onclick = () => { window.location.href = `https://line.me/R/ti/p/${lineid}`; };
+                    } else {
+                        btn.className = 'slot-btn';
+                        btn.innerText = slot.name;
+                        btn.onclick = function() {
+                            document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+                            btn.classList.add('selected');
+                            selectedSlotText = slot.name;
+                        };
+                    }
+                    slotsGrid.appendChild(btn);
+                });
+            } else {
+                slotsGrid.innerHTML = '<div style="color:var(--accent-coral); font-size:13px; padding: 5px 0;">⚠️ 當天資源已達上限，或不滿足多日課程連續性，請更換日期。</div>';
+            }
+        } else {
+            slotsGrid.innerHTML = `<div style="color:var(--accent-coral); font-size:13px; padding: 5px 0;">⚠️ 讀取失敗：${result.message}</div>`;
+        }
+    } catch (err) {
+        slotsGrid.innerHTML = '<div style="color:var(--accent-coral); font-size:13px; padding: 5px 0;">⚠️ 網路通訊異常，請重新選取日期。</div>';
+    }
+}
+
     /**
      * ─── 核心功能 6：表單防呆與規則過濾 ───
      */
-    function handleDateChange() {
-        const dateInput = document.getElementById('bookingDate');
-        const fdAlert = document.getElementById('fdAlert');
-        if (currentOrder.code === 'plan_2_half_year') {
-            const minLimit = new Date();
-            minLimit.setDate(minLimit.getDate() + 14); 
-            const formattedMin = minLimit.toISOString().split('T')[0];
-            dateInput.min = formattedMin;
-            fdAlert.innerText = "💡 條款防呆：半年養成計畫最晚需 2 週前預約，系統已為您過濾近兩週日期。";
+       function handleDateChange() {
+    const dateInput = document.getElementById('bookingDate');
+    const fdAlert = document.getElementById('fdAlert');
+    const selectedDate = dateInput.value;
+
+    // 旺季 (6-8月) 或假日，體驗潛水/Fundive 7日預約防呆限制
+    if (selectedDate && (currentOrder.code === 'plan_experience' || currentOrder.code === 'plan_fundive')) {
+        const today = new Date();
+        const target = new Date(selectedDate);
+        const diffTime = target - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const month = target.getMonth() + 1;
+        const dayOfWeek = target.getDay(); // 0 是週日，6 是週六
+        const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+
+        if ((month >= 6 && month <= 8 || isWeekend) && diffDays <= 7) {
+            fdAlert.innerHTML = "⚠️ <b>旺季/假日防呆提示</b>：旺季或假日 7 日內的時段需由專人手動排程，請點選下方按鈕轉官方 LINE 詢問確認。";
             fdAlert.style.display = "block";
-            if (dateInput.value && dateInput.value < formattedMin) { dateInput.value = ""; }
+            // 呼叫時段時，後端會自動將時段加上轉專人(agent)標籤
         } else {
-            dateInput.removeAttribute('min');
             fdAlert.style.display = "none";
         }
     }
+
+    if (selectedDate) {
+        updateAvailableSlots(currentOrder.code, selectedDate);
+    }
+}
        
     /**
      * ─── 核心功能 7：加入購物車明細計算 (全面支援加購多選) ───
@@ -543,6 +613,33 @@
             alert('請完整選取預約日期與場次時段！');
             return;
         }
+
+        // ─── 新增：發動後端 Soft Lock 佔位防禦 ───
+    try {
+        const response = await fetch(GS_API_URL, {
+            method: 'POST',
+            mode: 'cors',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({
+                action: "softLockSlot",
+                productCode: currentOrder.code,
+                date: dateVal,
+                slot: selectedSlotText,
+                pax: parseInt(document.getElementById('paxCount').value)
+            })
+        });
+        const lockResult = await response.json();
+        
+        if (!lockResult.success) {
+            alert(`下手慢了！ ${lockResult.message}，請重新選擇時段。`);
+            updateAvailableSlots(currentOrder.code, dateVal); // 刷新時段
+            return;
+        }
+        // ─── 佔位成功，進入後續金流計算 ───
+    } catch(err) {
+        alert('安全佔位通訊忙碌中，請重新嘗試。');
+        return;
+    }
         
         currentOrder.date = dateVal;
         currentOrder.slot = selectedSlotText;
