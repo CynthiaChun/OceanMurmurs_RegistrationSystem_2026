@@ -187,25 +187,43 @@
 
     /**
      * ─── 核心功能 3：網頁與 LINE LIFF 初始化 ───
+     * ─── 核心功能 3：網頁與 LINE LIFF 初始化（資安與結構防禦優化版） ───
      */
     async function initLIFF() {
-        // 🟢 調整順序：先優雅等待 API 撈取與初次渲染完畢後，再發起 LINE 身分憑證握手
+        // 1. 先確保拉取 Google Sheet 資料庫並成功渲染首頁計畫卡片
         await fetchPlanDetails(); 
+        
+        // 2. 開始進行 LINE LIFF 身分憑證握手，並對 DOM 節點進行嚴格防呆
+        const lineDisplayEl = document.getElementById('lineIdDisplay');
+        const lineWarningEl = document.getElementById('lineWarning');
+        
         try {
             await liff.init({ liffId: LIFF_ID });
             if (!liff.isLoggedIn()) {
                 liff.login();
             } else {
                 userIdToken = liff.getIDToken(); 
-                document.getElementById('lineIdDisplay').value = "✓ LINE 安全憑證金鑰已就緒";
-                document.getElementById('lineIdDisplay').style.color = "#10B981";
+                
+                // 🔒 資安防呆：確認元素存在才寫入值，避免 null 崩潰
+                if (lineDisplayEl) {
+                    lineDisplayEl.value = "✓ LINE 安全憑證金鑰已就緒";
+                    lineDisplayEl.style.color = "#10B981";
+                }
             }
         } catch (error) {
-            document.getElementById('lineIdDisplay').value = "⚠️ 未能成功取得 LINE 綁定";
-            document.getElementById('lineIdDisplay').style.color = "#DC2626";
-            document.getElementById('lineWarning').style.display = "block";
+            console.warn("⚠️ [LIFF 提示] 目前可能處於環境外測試或未綁定 LINE API：", error);
+            
+            // 防賴鎖定：如果節點存在才動態顯示警告，不阻斷網頁開啟
+            if (lineDisplayEl) {
+                lineDisplayEl.value = "⚠️ 未能成功取得 LINE 綁定";
+                lineDisplayEl.style.color = "#DC2626";
+            }
+            if (lineWarningEl) {
+                lineWarningEl.style.display = "block";
+            }
         }
         
+        // 3. 處理瀏覽器單頁式歷史路徑路由
         const urlParams = new URLSearchParams(window.location.search);
         if(!urlParams.has('step')) {
             history.replaceState({ step: 1 }, "Step 1", "?step=1");
@@ -1015,13 +1033,22 @@ async function updateAvailableSlots(productCode, selectedDate) {
     /**
      * ─── 11：載入中：在 initApp() 啟動時開啟氣泡生成器 ───
      */    
-    async function initApp() {
-        //startLoadingText();
+    //async function initApp() {
+    //    //startLoadingText();
         
-        // 🟢 不需要再使用 setInterval 了！純 CSS 氣泡在網頁打開的第一瞬間就會自己動起來！
-        await fetchPlanDetails();
-        initLIFF();
+    //    // 🟢 不需要再使用 setInterval 了！純 CSS 氣泡在網頁打開的第一瞬間就會自己動起來！
+    //    await fetchPlanDetails();
+    //    initLIFF();
+    //}
+    async function initApp() {
+        // 啟動時一併執行 LIFF 與 Sheet 整合，純 CSS 氣泡會自然運作
+        await initLIFF();
     }
+
+    // 👑 正式啟動全店系統（修改：改為呼叫總進入點，移除多餘的重複調用）
+    window.addEventListener('DOMContentLoaded', () => {
+        initApp();
+    });
 
     // 啟動應用
     initLIFF();   
