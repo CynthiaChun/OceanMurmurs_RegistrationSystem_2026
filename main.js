@@ -78,112 +78,98 @@
 
     /**
      * ─── 核心功能 2：動態渲染第一頁的產品分組列表 ───
+     * ─── 核心功能 2：動態渲染第一頁的產品分組列表（終極結構防禦版） ───
      */
     function renderProductList() {
-        const sectionList = document.getElementById('section-list');
-        if (!sectionList || Object.keys(PLAN_DETAILS).length === 0) return;
-        
-        // 根據 API 中的 kindName 自動分組 (單一事實來源)
-        const grouped = Object.values(PLAN_DETAILS).reduce((acc, p) => {
-            if(!acc[p.kindName]) acc[p.kindName] = [];
-            acc[p.kindName].push(p);
-            return acc;
-        }, {});
-
-        let listHTML = '';
-
-        for (const [catName, products] of Object.entries(grouped)) {
-            const isTour = catName.includes('休閒潛旅');
-            listHTML += `<div class="category-title">${catName}</div><div class="product-grid">`;
-            
-            products.sort((a,b) => a.sort - b.sort).forEach(product => {
-                const isLocked = product.id.startsWith('tour_');
-                
-                // 1. 萃取圖片網址 (優先用 bgurl，沒有就自動抓 carousel 第一張)
-                //【超級防呆改動】：優先看 bgurl 有沒有填，如果沒填，自動拿 carousel 的第一張圖網址當背景
-                let targetImgUrl = "";
-                if (product.bgurl && product.bgurl.trim() !== "") {
-                    targetImgUrl = product.bgurl.trim();
-                } else if (product.carousel && product.carousel.length > 0 && product.carousel[0].url) {
-                    targetImgUrl = product.carousel[0].url.trim();
-                }
+    const sectionList = document.getElementById('section-list');
+    if (!sectionList || Object.keys(PLAN_DETAILS).length === 0) return;
     
-                const hasBg = targetImgUrl !== "";
-                let cardStyle = "";
-                
-                // 2. 🟢 修正錯誤的 CSS 拼接：多重背景必須相互獨立，不能把 url() 塞進 linear-gradient() 括號裡
-                if (isLocked) {
-                    if (hasBg) {
-                        // 有圖的舊生專區：深灰藍半透明遮罩層 (第一層) + 試算表圖片 (第二層)
-                        cardStyle = `background-image: linear-gradient(135deg, rgba(74, 98, 106, 0.85), rgba(69, 90, 100, 0.85)), url('${targetImgUrl}');`;
-                    } else {
-                        // 沒圖的舊生專區：純色漸層
-                        cardStyle = `background-image: linear-gradient(135deg, #4A626A, #455A64);`;
-                    }
-                    cardStyle += ` background-size: cover; background-position: center; background-repeat: no-repeat;`;
-                } else if (hasBg) {
-                    // 常規課程：輕度遮罩層 + 圖片
-                    cardStyle = `background-image: linear-gradient(rgba(30, 81, 98, 0.2), rgba(15, 37, 55, 0.4)), url('${targetImgUrl}'); background-size: cover; background-position: center; background-repeat: no-repeat;`;
-                }
+    // 根據 API 中的 kindName 自動分組
+    const grouped = Object.values(PLAN_DETAILS).reduce((acc, p) => {
+        // 防呆：如果有些項目缺 kindName，給它一個預設分類，絕對不准崩潰
+        const category = p.kindName ? p.kindName.trim() : "精選計畫課程";
+        if(!acc[category]) acc[category] = [];
+        acc[category].push(p);
+        return acc;
+    }, {});
 
-                let badgeText = product.promoText ? product.promoText.split('！')[0].split('（')[0] : '精選推薦';
-                if (isLocked) badgeText = '舊生學員限定';   
-                
-                // ──────────────────────────────────────────────────────────────
-                // 🟢 新增：動態判斷列表卡片是否顯示原價（帶刪除線）
-                // ──────────────────────────────────────────────────────────────
-                let cardPriceHTML = "";
-                if (isLocked) {
-                    cardPriceHTML = '★ 點此查看行程藍圖';
+    let listHTML = '';
+
+    for (const [catName, products] of Object.entries(grouped)) {
+        listHTML += `<div class="category-title">${catName}</div><div class="product-grid">`;
+        
+        products.sort((a,b) => (Number(a.sort) || 0) - (Number(b.sort) || 0)).forEach(product => {
+            // 安全防護：確保 ID 存在，並防呆防範大小寫與型態錯誤
+            const pid = product.id ? product.id.toString() : "";
+            const isLocked = pid.startsWith('tour_');
+            
+            // 1. 萃取圖片網址安全線
+            let targetImgUrl = "";
+            if (product.bgurl && product.bgurl.trim() !== "") {
+                targetImgUrl = product.bgurl.trim();
+            } else if (product.carousel && product.carousel.length > 0 && product.carousel[0].url) {
+                targetImgUrl = product.carousel[0].url.trim();
+            }
+
+            const hasBg = targetImgUrl !== "";
+            let cardStyle = "";
+            
+            if (isLocked) {
+                cardStyle = hasBg ? 
+                    `background-image: linear-gradient(135deg, rgba(74, 98, 106, 0.85), rgba(69, 90, 100, 0.85)), url('${targetImgUrl}');` : 
+                    `background-image: linear-gradient(135deg, #4A626A, #455A64);`;
+                cardStyle += ` background-size: cover; background-position: center; background-repeat: no-repeat;`;
+            } else if (hasBg) {
+                cardStyle = `background-image: linear-gradient(rgba(30, 81, 98, 0.2), rgba(15, 37, 55, 0.4)), url('${targetImgUrl}'); background-size: cover; background-position: center; background-repeat: no-repeat;`;
+            }
+
+            let badgeText = product.promoText ? product.promoText.split('！')[0].split('（')[0] : '精選推薦';
+            if (isLocked) badgeText = '舊生學員限定';   
+            
+            // 2. 金額洗滌防線：強制洗成數字，防止字串或 undefined 破壞 CSS 結構
+            let cardPriceHTML = "";
+            const rawPrice = product.price ? Number(product.price) : 0;
+            const rawOriginalPrice = product.originalPrice ? Number(product.originalPrice) : 0;
+
+            if (isLocked) {
+                cardPriceHTML = '★ 點此查看行程藍圖';
+            } else {
+                if (rawOriginalPrice > rawPrice) {
+                    cardPriceHTML = `NT$ ${rawPrice.toLocaleString()} <span class="info-original-price" style="margin-left:6px; font-size:12px; color:var(--text-muted); text-decoration:line-through; font-weight:400;">原價 NT$ ${rawOriginalPrice.toLocaleString()}</span>`;
                 } else {
-                    const currentPrice = Number(product.price).toLocaleString();
-                    const originalPrice = Number(product.originalPrice).toLocaleString();
-                    
-                    // 如果有填原價，且原價大於目前售價，就加上刪除線樣式顯示
-                    if (product.originalPrice && Number(product.originalPrice) > Number(product.price)) {
-                        cardPriceHTML = `NT$ ${currentPrice} <span class="info-original-price" style="margin-left:6px; font-size:12px; color:var(--text-muted); text-decoration:line-through; font-weight:400;">原價 NT$ ${originalPrice}</span>`;
-                    } else {
-                        cardPriceHTML = `NT$ ${currentPrice}`;
-                    }
+                    cardPriceHTML = `NT$ ${rawPrice.toLocaleString()}`;
                 }
-                // ──────────────────────────────────────────────────────────────
+            }
 
-                listHTML += `
-                    <div class="product-card ${isLocked ? 'locked-item' : ''}" >
-                        <div class="p-img-placeholder ${hasBg && !isLocked ? 'has-bg' : ''}" style="${cardStyle}">
-                            <span class="p-badge">${badgeText}</span>
-                            <h3>${product.title.split('｜')[0]}</h3>
-                        </div>
-                        <div class="p-content">
-                            <p style="font-size: 13px; color:#6B7280; margin-bottom: 10px;">${product.ActivityDescription ? product.ActivityDescription.substring(0, 100) : ''}...</p>
-                            
-                            <!-- 🟢 替換此處：直接引入剛剛動態組裝好的 cardPriceHTML -->
-                            <div class="p-price" style="${isLocked ? 'color:#455A64; font-size:14px;' : ''}">${cardPriceHTML}</div>
-                            
-                            <button class="btn-order" style="${isLocked ? 'background:#455A64;' : ''}" onclick="('${product.id}', '${product.title.split('｜')[0]}', ${product.price})">${isLocked ? '查看計畫細節' : '立即預訂'}</button>
-                        </div>
-                    </div>`;
-                
-                //listHTML += `
-                //    <div class="product-card ${isLocked ? 'locked-item' : ''}" >
-                //        <div class="p-img-placeholder ${hasBg && !isLocked ? 'has-bg' : ''}" style="${cardStyle}">
-                //            <span class="p-badge">${badgeText}</span>
-                //            <h3>${product.title.split('｜')[0]}</h3>
-                //        </div>
-                //        <div class="p-content">
-                //            <p style="font-size: 13px; color:#6B7280; margin-bottom: 10px;">${product.warmNotice ? product.warmNotice.substring(0, 30) : ''}...</p>
-                //            
-                //            <!-- 🟢 替換此處：直接引入剛剛動態組裝好的 cardPriceHTML -->
-                //            <div class="p-price" style="${isLocked ? 'color:#455A64; font-size:14px;' : ''}">${cardPriceHTML}</div>
-                //            
-                //            <button class="btn-order" style="${isLocked ? 'background:#455A64;' : ''}" onclick="('${product.id}', '${product.title.split('｜')[0]}', ${product.price})">${isLocked ? '查看計畫細節' : '立即預訂'}</button>
-                //        </div>
-                //    </div>`;
-            });
-            listHTML += `</div>`;
-        }
-        sectionList.innerHTML = listHTML;
+            // 3. 簡介內文安全截斷防線：全方位檢查 ActivityDescription、warmNotice，防止 null.substring 崩潰
+            let rawDesc = product.ActivityDescription || product.warmNotice || "";
+            let cleanDesc = rawDesc.toString().replace(/<[^>]*>/g, '').substring(0, 80); // 拔除 HTML 標籤並安全截斷 80 字
+            if (rawDesc.length > 80) cleanDesc += "...";
+
+            // 4. 標題洗滌防線
+            const cleanTitle = product.title ? product.title.split('｜')[0].split('|')[0].trim() : "潛水計畫";
+
+            // ⚡ 終極修正：將 selectProduct 的引號鋼鐵鎖定，徹底防止 HTML 拼接爆開
+            listHTML += `
+                <div class="product-card ${isLocked ? 'locked-item' : ''}">
+                    <div class="p-img-placeholder ${hasBg && !isLocked ? 'has-bg' : ''}" style="${cardStyle}">
+                        <span class="p-badge">${badgeText}</span>
+                        <h3>${cleanTitle}</h3>
+                    </div>
+                    <div class="p-content">
+                        <p style="font-size: 13px; color:#6B7280; margin-bottom: 10px; line-height:1.5;">${cleanDesc}</p>
+                        <div class="p-price" style="${isLocked ? 'color:#455A64; font-size:14px;' : ''}">${cardPriceHTML}</div>
+                        <button class="btn-order" style="${isLocked ? 'background:#455A64;' : ''}" onclick="selectProduct('${pid}', '${cleanTitle.replace(/'/g, "\\'")}', ${rawPrice})">
+                            ${isLocked ? '查看計畫細節' : '立即預訂'}
+                        </button>
+                    </div>
+                </div>`;
+        });
+        listHTML += `</div>`;
     }
+    
+    sectionList.innerHTML = listHTML;
+}
 
     /**
      * ─── 核心功能 3：網頁與 LINE LIFF 初始化 ───
