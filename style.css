@@ -275,3 +275,26 @@
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-10px); }
 }
+
+/* ──────────────────────────────────────────────────────────────
+ * 🛡️ 呼藍預約系統 - 時段軟硬鎖停用按鈕防護樣式
+ * ────────────────────────────────────────────────────────────── */
+.slot-btn.disabled-slot {
+    background-color: #F3F4F6 !important;
+    border-color: #E5E7EB !important;
+    color: #9CA3AF !important;
+    cursor: not-allowed !important;
+    opacity: 0.75;
+    text-decoration: line-through;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+/* 覆蓋滑鼠懸停時的動態效果，確保停用按鈕完全靜態 */
+.slot-btn.disabled-slot:hover {
+    background-color: #F3F4F6 !important;
+    color: #9CA3AF !important;
+    transform: none !important;
+    box-shadow: none !important;
+    border-color: #E5E7EB !important;
+}
