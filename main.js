@@ -432,7 +432,7 @@
                         const chk = document.createElement('input');
                         chk.type = 'checkbox';
                         chk.className = 'addon-checkbox-item';
-                        chk.value = addon.type;
+                        chk.value = addon.ID; //addon.type;
                         chk.id = `addon_chk_${index}`;
                         chk.setAttribute('data-price', addon.price);
                         chk.setAttribute('data-text', addon.text);
