@@ -160,7 +160,7 @@
                             <!-- 🟢 替換此處：直接引入剛剛動態組裝好的 cardPriceHTML -->
                             <div class="p-price" style="${isLocked ? 'color:#455A64; font-size:14px;' : ''}">${cardPriceHTML}</div>
                             
-                            <button class="btn-order" style="${isLocked ? 'background:#455A64;' : ''}" onclick="selectProduct('${product.id}', '${product.title.split('｜')[0]}', ${product.price})">${isLocked ? '查看計畫細節' : '立即預訂'}</button>
+                            <button class="btn-order" style="${isLocked ? 'background:#455A64;' : ''}" onclick="('${product.id}', '${product.title.split('｜')[0]}', ${product.price})">${isLocked ? '查看計畫細節' : '立即預訂'}</button>
                         </div>
                     </div>`;
                 
@@ -176,7 +176,7 @@
                 //            <!-- 🟢 替換此處：直接引入剛剛動態組裝好的 cardPriceHTML -->
                 //            <div class="p-price" style="${isLocked ? 'color:#455A64; font-size:14px;' : ''}">${cardPriceHTML}</div>
                 //            
-                //            <button class="btn-order" style="${isLocked ? 'background:#455A64;' : ''}" onclick="selectProduct('${product.id}', '${product.title.split('｜')[0]}', ${product.price})">${isLocked ? '查看計畫細節' : '立即預訂'}</button>
+                //            <button class="btn-order" style="${isLocked ? 'background:#455A64;' : ''}" onclick="('${product.id}', '${product.title.split('｜')[0]}', ${product.price})">${isLocked ? '查看計畫細節' : '立即預訂'}</button>
                 //        </div>
                 //    </div>`;
             });
@@ -214,260 +214,141 @@
 
     /**
      * ─── 核心功能 4：選擇產品並動態渲染時段場次與加購 ───
+     * ─── 核心功能 4：選擇產品並動態發動第一道防線檢查 ───
      */
-    function selectProduct(code, name, price) {
-        if (window.event) window.event.stopPropagation();
 
-        const details = PLAN_DETAILS[code];
-        if (!details) {
-            alert('系統提示：找不到該項目的詳細資料。');
-            return;
-        }
+    // 【新增】宣告一格全域變數，用來承接該課程已被咬死的日期
+    let CURRENT_LOCKED_DATES = [];
 
-        // ──────────────────────────────────────────────────────────────
-        // 🟢 核心修改區域：動態渲染輪播圖 (Carousel Carousel Slide)
-        // ──────────────────────────────────────────────────────────────
-        // ──────────────────────────────────────────────────────────────
-        // 🟢 核心修改區域：動態渲染輪播圖 (精準分離按鈕與滾動容器)
-        // ──────────────────────────────────────────────────────────────
-        const wrapper = document.getElementById('carouselWrapperId');
-        const container = document.getElementById('carouselId');
-        
-        if (wrapper && container) {
-            // 1. 先把「外層」的按鈕清空並重新植入（確保不會重複累積按鈕）
-            // 先保留原本的長寬比容器，並將按鈕釘在 wrapper 這層
-            wrapper.querySelectorAll('.carousel-nav-btn').forEach(btn => btn.remove());
-            
-            // 2. 重新植入外層按鈕（維持原本的分離邏輯）
-            wrapper.querySelectorAll('.carousel-nav-btn').forEach(btn => btn.remove());
+    async function selectProduct(code, name, price) {
+    if (window.event) window.event.stopPropagation();
 
-            const prevBtn = document.createElement('button');
-            prevBtn.className = 'carousel-nav-btn prev';
-            prevBtn.type = 'button';
-            prevBtn.innerHTML = '‹';
-            prevBtn.onclick = () => scrollCarousel(-1);
-        
-            const nextBtn = document.createElement('button');
-            nextBtn.className = 'carousel-nav-btn next';
-            nextBtn.type = 'button';
-            nextBtn.innerHTML = '›';
-            nextBtn.onclick = () => scrollCarousel(1);
-        
-            wrapper.appendChild(prevBtn);
-            wrapper.appendChild(nextBtn);
-        
-            // 3. 清空「內層」滾動容器，專心只放圖片滑塊
-            container.innerHTML = '';
-         
-            // 4. 開始塞入新產品的圖片
-            if (details.carousel && details.carousel.length > 0) {
-                // 遍歷 API 回傳的 carousel 陣列，動態組裝 img 標籤
-                details.carousel.forEach(imgObj => {
-                    const slide = document.createElement('div');
-                    slide.className = 'carousel-slide';
-                    slide.innerHTML = `<img src="${imgObj.url}" alt="${imgObj.text || '呼藍之間'}" loading="lazy">`;
-                    container.appendChild(slide);
-                });
-            } else if (details.bgurl && details.bgurl.trim() !== "") {
-                // 防呆機制：若 carousel 欄位剛好沒填，則自動降級使用主 bgurl 填滿單張輪播
-                const slide = document.createElement('div');
-                slide.className = 'carousel-slide';
-                slide.innerHTML = `<img src="${details.bgurl}" alt="${name}" loading="lazy">`;
-                container.appendChild(slide);
-            } else {
-                // 完全無圖時的預設潛水品牌形象主圖防破版
-                const slide = document.createElement('div');
-                slide.className = 'carousel-slide';
-                slide.innerHTML = `<img src="${OM_Img_Url}" alt="Ocean Murmurs">`;
-                container.appendChild(slide);
-            }
-            
-            // 渲染完成後，強制重設輪播圖捲軸回到最左側第一張
-            //container.scrollLeft = 0;
-
-            // 5. 【關鍵動作二】利用瀏覽器排程，確保新 DOM 物件長好後，再次強制歸零
-            // 使用 setTimeout 確保這段程式碼在 UI 渲染隊列的最後才執行，資安與視覺體驗最穩固
-            setTimeout(() => {
-                container.scrollLeft = 0;
-            }, 50);
-        }
-        // ──────────────────────────────────────────────────────────────
-        // ──────────────────────────────────────────────────────────────
-        // 🟢 核心修改區域結束（下方維持你原本的 infoHTML、fieldsWrapper 邏輯即可）
-        // ──────────────────────────────────────────────────────────────
-
-
-        currentOrder.code = code;
-        currentOrder.name = name;
-        currentOrder.basePrice = Number(price);
-
-        const infoBlock = document.getElementById('dynamic-product-info');
-        const fieldsWrapper = document.getElementById('booking-fields-wrapper');
-        const buttonGroup = document.getElementById('detail-action-buttons');
-
-        // ──────────────────────────────────────────────────────────────
-        // 🟢 修改區域：補上原價顯示邏輯
-        // ──────────────────────────────────────────────────────────────
-        let priceHTML = "";
-        if (code.startsWith('tour_')) {
-            priceHTML = '<small>OceanMurmurs 學員專屬行程 • 不開放線上直接預訂</small>';
-        } else {
-            const price = Number(details.price).toLocaleString();
-            const originalPrice = Number(details.originalPrice).toLocaleString();
-            
-            // 如果有原價且原價大於售價，才顯示刪除線的原價
-            if (details.originalPrice > details.price) {
-                priceHTML = `NT$ ${price} <span class="info-original-price" style="margin-left:9px;">原價 NT$ ${originalPrice}</span>`;
-            } else {
-                priceHTML = `NT$ ${price}`;
-            }
-        }
-
-        let infoHTML = `<h2>${details.title}</h2>
-                        <div class="info-price-row">${priceHTML}</div>
-                        <div class="info-system-declare">※ 此為線上系統，<a href="javascript:void(0)" onclick="openPolicyModal()">課程細節與安全規範政策內容請至此瀏覽</a>。</div>`;
-        // 🟢 動態組裝介紹內文，將試算表的 admin_note (我的說明) 漂亮地顯示在畫面上
-        //let infoHTML = `<h2>${details.title}</h2>
-        //                <div class="info-price-row">${priceHTML}</div>
-        //                
-        //                <!-- 新增：如果有 admin_note 說明，用一格漂亮的小區塊呈現包含項目 -->
-        //                ${details.admin_note ? `
-        //                    <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 12px; border-radius: 8px; margin: 15px 0; font-size: 13.5px; line-height: 1.6; color: #334155;">
-        //                        <strong style="color: var(--primary-teal); display: block; margin-bottom: 4px;">📦 方案包含項目說明：</strong>
-        //                        ${details.admin_note}
-        //                    </div>
-        //                ` : ''}
-        //                
-        //                <div class="info-system-declare">※ 此為線上系統，<a href="javascript:void(0)" onclick="openPolicyModal()">課程細節與安全規範政策內容請至此瀏覽</a>。</div>`;
-        // ──────────────────────────────────────────────────────────────
-
-        
-        if (details.paragraphs && details.paragraphs.length > 0) {
-            details.paragraphs.forEach(p => infoHTML += `<p class="info-paragraph">${p}</p>`);
-        }
-        infoHTML += `<div class="info-warm-notice">${details.warmNotice}</div>`;
-        infoBlock.innerHTML = infoHTML;
-
-        // 如果是舊生限定的潛旅區塊，隱藏時段表單，直接導向官方 LINE 客服索取簡章
-        if (code.startsWith('tour_')) {
-            fieldsWrapper.style.display = 'none';
-            buttonGroup.innerHTML = `<button class="btn-back" type="button" onclick="navigateBack()">← 返回計畫列表</button>
-                                     <button class="btn-next btn-line-redirect" type="button" onclick="window.location.href='https://line.me/R/ti/p/${lineid}'">私訊 LINE 索取簡章</button>`;
-        } else {
-            fieldsWrapper.style.display = 'block';
-            buttonGroup.innerHTML = `
-                <button class="btn-back" type="button" onclick="navigateBack()">← 返回上一頁</button>
-                <button class="btn-next" type="button" onclick="goToCart()">加入購物車並下一步</button>
-            `;
-
-            // 動態場次按鈕渲染
-            const slotsGrid = document.querySelector('.slots-grid');
-            slotsGrid.innerHTML = ''; 
-            if (details.slots && details.slots.length > 0) {
-                details.slots.forEach(slotName => {
-                    const btn = document.createElement('div');
-                    btn.className = 'slot-btn';
-                    btn.innerText = slotName;
-                    btn.onclick = function() {
-                        document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
-                        btn.classList.add('selected');
-                        selectedSlotText = slotName;
-                    };
-                    slotsGrid.appendChild(btn);
-                });
-            } else {
-                slotsGrid.innerHTML = '<div style="color:var(--accent-coral); font-size:13px; padding: 5px 0; grid-column: span 2;">⚠️ 本方案無固定場次，報名後將由小編人工為您安排。</div>';
-            }
-
-            // ──────────────────────────────────────────────────────────────
-            // 新增：根據資料庫 maxPax 動態生成預約人數下拉選單
-            // 終極修正：對齊資料庫欄位名稱 details.peopleCount 動態生成人數選單
-            // ──────────────────────────────────────────────────────────────
-            const paxSelect = document.getElementById('paxCount');
-            if (paxSelect) {
-                paxSelect.innerHTML = ''; // 先清空下拉選單的舊選項
-                
-                // 🔑 關鍵改動：你的 Google Sheet 回傳欄位叫做 peopleCount，在此精準讀取
-                const maxLimit = details.peopleCount ? parseInt(details.peopleCount) : 4; 
-                
-                // 跑迴圈動態吐出 1 到上限值的選單節點
-                for (let i = 1; i <= maxLimit; i++) {
-                    const opt = document.createElement('option');
-                    opt.value = i;
-                    // 當數值到達上限時，加上 (上限) 的防呆視覺提示
-                    opt.innerText = i === maxLimit ? `${i} 人 (上限)` : `${i} 人`;
-                    paxSelect.appendChild(opt);
-                }
-            }
-            // ──────────────────────────────────────────────────────────────
-
-            // 動態增值加購服務選單
-            //const addonSelect = document.getElementById('addon-select');
-            //addonSelect.innerHTML = '<option value="none" data-price="0">不加購額外服務</option>'; 
-            //if (details.addons && details.addons.length > 0) {
-            //    details.addons.forEach(addon => {
-            //        const opt = document.createElement('option');
-            //        opt.value = addon.type; 
-            //        opt.setAttribute('data-price', addon.price);
-            //        opt.innerText = `${addon.text} — +$${addon.price.toLocaleString()}`;
-            //        addonSelect.appendChild(opt);
-            //    });
-            //}
-            // ──────────────────────────────────────────────────────────────
-            // 🟢 調整：將加購服務改為 Checkbox 多選框動態生成
-            // ──────────────────────────────────────────────────────────────
-            const addonContainer = document.getElementById('addon-checkbox-container');
-            if (addonContainer) {
-                addonContainer.innerHTML = ''; // 先刷空舊的容器内容
-                
-                if (details.addons && details.addons.length > 0) {
-                    details.addons.forEach((addon, index) => {
-                        const wrapper = document.createElement('div');
-                        wrapper.style.display = 'flex';
-                        wrapper.style.alignItems = 'center';
-                        wrapper.style.gap = '10px';
-                        wrapper.style.cursor = 'pointer';
-                        
-                        // 建立 Checkbox 本體
-                        const chk = document.createElement('input');
-                        chk.type = 'checkbox';
-                        chk.className = 'addon-checkbox-item';
-                        chk.value = addon.ID; //addon.type;
-                        chk.id = `addon_chk_${index}`;
-                        chk.setAttribute('data-price', addon.price);
-                        chk.setAttribute('data-text', addon.text);
-
-                        // 🟢 新增：把 API 的 hours 欄位埋入 HTML 屬性中，如果沒有寫預設為 0
-                        chk.setAttribute('data-hours', addon.hours || 0);
-                        
-                        // 處理事件：勾選時立即重新計算金額（選填：如果你希望在 Step 2 就能即時看到金額）
-                        // chk.onchange = function() { ... }; 
-
-                        // 建立 Label 標籤文字
-                        const lbl = document.createElement('label');
-                        lbl.htmlFor = `addon_chk_${index}`;
-                        lbl.style.cursor = 'pointer';
-                        lbl.style.fontSize = '13.5px';
-                        lbl.style.fontWeight = '500';
-                        lbl.style.marginBottom = '0'; // 覆蓋全域的 label margin
-                        lbl.innerText = `${addon.text} ( +$${addon.price.toLocaleString()} )`;
-                        
-                        wrapper.appendChild(chk);
-                        wrapper.appendChild(lbl);
-                        addonContainer.appendChild(wrapper);
-                    });
-                } else {
-                    addonContainer.innerHTML = '<div style="color:var(--text-muted); font-size:13px;">💡 本方案目前無可額外加購之輔助服務。</div>';
-                }
-            }
-            // ──────────────────────────────────────────────────────────────
-        }
-        
-        document.getElementById('bookingDate').value = "";
-        selectedSlotText = '';
-        changeStep(2);
-        handleDateChange();
+    const details = PLAN_DETAILS[code];
+    if (!details) {
+        alert('系統提示：找不到該項目的詳細資料。');
+        return;
     }
+
+    currentOrder.code = code;
+    currentOrder.name = name;
+    currentOrder.basePrice = Number(price);
+
+    // ──────────────────────────────────────────────────────────────
+    // 🛡️ 流程第一步：學員點擊課程按鈕 ──> 前端動態發送大範圍日期檢查
+    // ──────────────────────────────────────────────────────────────
+    const loader = document.getElementById('loading-overlay');
+    if (loader) {
+        document.getElementById('loading-text').innerText = "正為您潛入內太空盤點教練船位...";
+        loader.style.display = 'flex';
+        loader.style.opacity = '1';
+    }
+
+    try {
+        // 即時向後端拉取目前該課程未來 45 天已被完全咬死的日期陣列
+        const response = await fetch(`${GS_API_URL}?action=getLockedDates&productCode=${code}`);
+        const result = await response.json();
+        if (result.success) {
+            CURRENT_LOCKED_DATES = result.lockedDates; 
+            console.log("🛡️ 第一道防線就緒！已額滿不開放日期清單：", CURRENT_LOCKED_DATES);
+        }
+    } catch (err) {
+        console.error("第一道防線通訊異常，改由第二道防線全面防守:", err);
+    } finally {
+        if (loader) {
+            loader.style.opacity = '0';
+            setTimeout(() => { loader.style.display = 'none'; }, 500);
+        }
+    }
+
+    // ─── 下方維持輪播與文字資訊組裝（與原本相同） ───
+    const infoBlock = document.getElementById('dynamic-product-info');
+    const fieldsWrapper = document.getElementById('booking-fields-wrapper');
+    const buttonGroup = document.getElementById('detail-action-buttons');
+
+    // 處理輪播圖重置邏輯
+    const wrapper = document.getElementById('carouselWrapperId');
+    const container = document.getElementById('carouselId');
+    if (wrapper && container) {
+        wrapper.querySelectorAll('.carousel-nav-btn').forEach(btn => btn.remove());
+        const prevBtn = document.createElement('button'); prevBtn.className = 'carousel-nav-btn prev'; prevBtn.type = 'button'; prevBtn.innerHTML = '‹'; prevBtn.onclick = () => scrollCarousel(-1);
+        const nextBtn = document.createElement('button'); nextBtn.className = 'carousel-nav-btn next'; nextBtn.type = 'button'; nextBtn.innerHTML = '›'; nextBtn.onclick = () => scrollCarousel(1);
+        wrapper.appendChild(prevBtn); wrapper.appendChild(nextBtn);
+        container.innerHTML = '';
+        if (details.carousel && details.carousel.length > 0) {
+            details.carousel.forEach(imgObj => {
+                const slide = document.createElement('div'); slide.className = 'carousel-slide';
+                slide.innerHTML = `<img src="${imgObj.url}" alt="${imgObj.text || '呼藍之間'}" loading="lazy">`;
+                container.appendChild(slide);
+            });
+        } else {
+            const slide = document.createElement('div'); slide.className = 'carousel-slide'; slide.innerHTML = `<img src="${details.bgurl || OM_Img_Url}" alt="${name}">`;
+            container.appendChild(slide);
+        }
+        setTimeout(() => { container.scrollLeft = 0; }, 50);
+    }
+
+    let priceHTML = code.startsWith('tour_') ? 
+        '<small>OceanMurmurs 學員專屬行程 • 不開放線上直接預訂</small>' : 
+        (details.originalPrice > details.price ? `NT$ ${Number(details.price).toLocaleString()} <span class="info-original-price" style="margin-left:9px; text-decoration:line-through; font-size:12px; color:var(--text-muted);">原價 NT$ ${Number(details.originalPrice).toLocaleString()}</span>` : `NT$ ${Number(details.price).toLocaleString()}`);
+
+    let infoHTML = `<h2>${details.title}</h2>
+                    <div class="info-price-row">${priceHTML}</div>
+                    <div class="info-system-declare">※ 此為線上系統，<a href="javascript:void(0)" onclick="openPolicyModal()">課程細節與安全規範政策內容請至此瀏覽</a>。</div>`;
+    if (details.paragraphs && details.paragraphs.length > 0) {
+        details.paragraphs.forEach(p => infoHTML += `<p class="info-paragraph">${p}</p>`);
+    }
+    infoHTML += `<div class="info-warm-notice">${details.warmNotice}</div>`;
+    infoBlock.innerHTML = infoHTML;
+
+    if (code.startsWith('tour_')) {
+        fieldsWrapper.style.display = 'none';
+        buttonGroup.innerHTML = `<button class="btn-back" type="button" onclick="navigateBack()">← 返回計畫列表</button>
+                                 <button class="btn-next btn-line-redirect" type="button" onclick="window.location.href='https://line.me/R/ti/p/${lineid}'">私訊 LINE 索取簡章</button>`;
+    } else {
+        fieldsWrapper.style.display = 'block';
+        buttonGroup.innerHTML = `<button class="btn-back" type="button" onclick="navigateBack()">← 返回上一頁</button>
+                                 <button class="btn-next" type="button" onclick="goToCart()">加入購物車並下一步</button>`;
+
+        // 重置清空歷史日期與時段狀態
+        document.getElementById('bookingDate').value = "";
+        const slotsGrid = document.querySelector('.slots-grid');
+        slotsGrid.innerHTML = '<div style="color:var(--text-muted); font-size:13px; padding: 5px 0;">💡 請先選擇上方預約日期。</div>';
+        selectedSlotText = '';
+        
+        document.getElementById('bookingDate').min = new Date().toISOString().split('T')[0];
+    }
+    
+    // 生成人數選單
+    const paxSelect = document.getElementById('paxCount');
+    if (paxSelect) {
+        paxSelect.innerHTML = '';
+        const maxLimit = details.peopleCount ? parseInt(details.peopleCount) : 4; 
+        for (let i = 1; i <= maxLimit; i++) {
+            const opt = document.createElement('option'); opt.value = i; opt.innerText = i === maxLimit ? `${i} 人 (上限)` : `${i} 人`;
+            paxSelect.appendChild(opt);
+        }
+    }
+
+    // 生成加購選項
+    const addonContainer = document.getElementById('addon-checkbox-container');
+    if (addonContainer) {
+        addonContainer.innerHTML = '';
+        if (details.addons && details.addons.length > 0) {
+            details.addons.forEach((addon, index) => {
+                const wrapper = document.createElement('div'); wrapper.style.display = 'flex'; wrapper.style.alignItems = 'center'; wrapper.style.gap = '10px'; wrapper.style.cursor = 'pointer';
+                const chk = document.createElement('input'); chk.type = 'checkbox'; chk.className = 'addon-checkbox-item'; chk.value = addon.ID; chk.id = `addon_chk_${index}`;
+                chk.setAttribute('data-price', addon.price); chk.setAttribute('data-text', addon.text); chk.setAttribute('data-hours', addon.hours || 0);
+                const lbl = document.createElement('label'); lbl.htmlFor = `addon_chk_${index}`; lbl.style.cursor = 'pointer'; lbl.style.fontSize = '13.5px'; lbl.style.fontWeight = '500'; lbl.style.marginBottom = '0';
+                lbl.innerText = `${addon.text} ( +$${addon.price.toLocaleString()} )`;
+                wrapper.appendChild(chk); wrapper.appendChild(lbl); addonContainer.appendChild(wrapper);
+            });
+        } else {
+            addonContainer.innerHTML = '<div style="color:var(--text-muted); font-size:13px;">💡 本方案目前無可額外加購之輔助服務。</div>';
+        }
+    }
+
+    changeStep(2);
+}
 
     /**
      * ─── 核心功能 5：🟢 SPA 流程切換控制 (修正返回 Step 1 的空白破版邏輯) ───
@@ -570,33 +451,121 @@ async function updateAvailableSlots(productCode, selectedDate) {
 
     /**
      * ─── 核心功能 6：表單防呆與規則過濾 ───
+     * ─── 核心功能 6：學員點擊日期時 ──> 前端動態過濾並發送時段檢查（第二道防線） ───
      */
-       function handleDateChange() {
+       async function handleDateChange() {
     const dateInput = document.getElementById('bookingDate');
     const fdAlert = document.getElementById('fdAlert');
-    const selectedDate = dateInput.value;
+    const slotsGrid = document.querySelector('.slots-grid');
+    const selectedDateStr = dateInput.value;
+    
+    if (!selectedDateStr) return;
 
-    // 旺季 (6-8月) 或假日，體驗潛水/Fundive 7日預約防呆限制
-    if (selectedDate && (currentOrder.code === 'plan_experience' || currentOrder.code === 'plan_fundive')) {
-        const today = new Date();
-        const target = new Date(selectedDate);
-        const diffTime = target - today;
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        const month = target.getMonth() + 1;
-        const dayOfWeek = target.getDay(); // 0 是週日，6 是週六
-        const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+    // ──────────────────────────────────────────────────────────────
+    // 🛡️ 檢查點 1：比對點點擊課程時，大範圍拉回來已經額滿的黑名單日期
+    // ──────────────────────────────────────────────────────────────
+    if (CURRENT_LOCKED_DATES.includes(selectedDateStr)) {
+        fdAlert.innerHTML = "⚠️ <b>無法預約</b>：該日期的教練人力班次已完全額滿，或有全店停運事件，請重新選擇其他日期！";
+        fdAlert.style.color = "#DC2626";
+        fdAlert.style.display = "block";
+        dateInput.value = "";
+        slotsGrid.innerHTML = '<div style="color:var(--text-muted); font-size:13px; padding: 5px 0;">💡 請重新選擇上方預約日期。</div>';
+        return;
+    }
 
-        if ((month >= 6 && month <= 8 || isWeekend) && diffDays <= 7) {
-            fdAlert.innerHTML = "⚠️ <b>旺季/假日防呆提示</b>：旺季或假日 7 日內的時段需由專人手動排程，請點選下方按鈕轉官方 LINE 詢問確認。";
+    // ─── 檢查點 2：旺季與假日 7 日內防呆機制 ───
+    const selectedDate = new Date(selectedDateStr);
+    const today = new Date();
+    const timeDiff = selectedDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
+    const month = selectedDate.getMonth() + 1;
+    const dayOfWeek = selectedDate.getDay(); 
+    const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+
+    if ((month >= 6 && month <= 8) || isWeekend) {
+        if (diffDays <= 7) {
+            fdAlert.innerHTML = "⚠️ <b>系統提示</b>：旺季或假日 7 日內的場次極度緊繃，線上關閉直接預約，請轉專人為您處理！";
+            fdAlert.style.color = "#EA580C";
             fdAlert.style.display = "block";
-            // 呼叫時段時，後端會自動將時段加上轉專人(agent)標籤
-        } else {
-            fdAlert.style.display = "none";
+            dateInput.value = "";
+            slotsGrid.innerHTML = '<div style="color:var(--text-muted); font-size:13px; padding: 5px 0;">💡 請重新選擇上方預約日期。</div>';
+            return;
         }
     }
 
-    if (selectedDate) {
-        updateAvailableSlots(currentOrder.code, selectedDate);
+    // ─── 檢查點 3：針對多日考照課程（OW/AO）進行「跨日連續性」阻斷檢查 ───
+    const details = PLAN_DETAILS[currentOrder.code];
+    const hours = details.hours ? parseInt(details.hours) : 24;
+    const needDays = Math.ceil(hours / 24); 
+
+    if (needDays > 1) {
+        for (let i = 0; i < needDays; i++) {
+            const nextCheckDate = new Date(selectedDate);
+            nextCheckDate.setDate(selectedDate.getDate() + i);
+            const nextCheckDateStr = nextCheckDate.toISOString().split('T')[0];
+            
+            // 只要多日班的連續範圍內，有任何一天在額滿黑名單中，直接塗灰阻斷
+            if (CURRENT_LOCKED_DATES.includes(nextCheckDateStr)) {
+                fdAlert.innerHTML = `⚠️ <b>區間阻斷</b>：本課程需要連續 ${needDays} 天，但 ${nextCheckDateStr} 當天教練資源已滿，無法排課，請變更開始日期！`;
+                fdAlert.style.color = "#DC2626";
+                fdAlert.style.display = "block";
+                dateInput.value = "";
+                slotsGrid.innerHTML = '<div style="color:var(--text-muted); font-size:13px; padding: 5px 0;">💡 請重新選擇上方預約日期。</div>';
+                return;
+            }
+        }
+    }
+
+    // 常規半年養成計畫防呆
+    if (currentOrder.code === 'plan_2_half_year') {
+        const minLimit = new Date(); minLimit.setDate(minLimit.getDate() + 14);
+        if (selectedDateStr < minLimit.toISOString().split('T')[0]) {
+            fdAlert.innerText = "💡 條款防呆：半年養成計畫最晚需 2 週前預約。";
+            fdAlert.style.color = "#1E5162"; fdAlert.style.display = "block"; dateInput.value = "";
+            slotsGrid.innerHTML = '<div style="color:var(--text-muted); font-size:13px; padding: 5px 0;">💡 請重新選擇上方預約日期。</div>';
+            return;
+        }
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // 🛡️ 流程第二步：通過大範圍考核後，發送即時檢查請求拉取「時段軟硬鎖狀態」
+    // ──────────────────────────────────────────────────────────────
+    fdAlert.style.display = "none";
+    slotsGrid.innerHTML = '<div style="color:var(--text-muted); font-size:13px; padding:5px 0;">🔍 正在核對當天剩餘時段船位...</div>';
+
+    try {
+        const response = await fetch(`${GS_API_URL}?action=checkSlots&date=${selectedDateStr}&productCode=${currentOrder.code}`);
+        const result = await response.json();
+        
+        if (result.success) {
+            slotsGrid.innerHTML = '';
+            
+            if (details.slots && details.slots.length > 0) {
+                details.slots.forEach(slotName => {
+                    const btn = document.createElement('div');
+                    btn.className = 'slot-btn';
+                    btn.innerText = slotName;
+                    
+                    // 如果這個時段在 Orders 存在有效的 Soft Lock 或 Hard Lock，直接鎖死
+                    if (result.lockedSlots.includes(slotName)) {
+                        btn.classList.add('disabled-slot');
+                        btn.innerText = `${slotName} (已被佔位/額滿)`;
+                    } else {
+                        btn.onclick = function() {
+                            document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+                            btn.classList.add('selected');
+                            selectedSlotText = slotName;
+                        };
+                    }
+                    slotsGrid.appendChild(btn);
+                });
+            } else {
+                slotsGrid.innerHTML = '<div style="color:var(--accent-coral); font-size:13px; padding: 5px 0; grid-column: span 2;">⚠️ 本方案無固定場次，報名後將由小編人工為您安排。</div>';
+            }
+        }
+    } catch (error) {
+        console.error("時段動態防禦通訊異常:", error);
+        slotsGrid.innerHTML = '<div style="color:var(--accent-coral); font-size:13px;">⚠️ 無法取得該日場次，請重新點選日期。</div>';
     }
 }
        
